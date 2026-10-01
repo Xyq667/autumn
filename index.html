@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>His soul has in its Autumn</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #05070f;
+    font-family: "Georgia", "Times New Roman", serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .glow-text {
+    font-size: clamp(1.1rem, 3.4vw, 2.6rem);
+    letter-spacing: 0.04em;
+    color: #4db8ff;
+    cursor: pointer;
+    padding: 1rem 1.4rem;
+    text-align: center;
+    line-height: 1.5;
+    border-radius: 12px;
+    transition: color .3s ease, text-shadow .3s ease, transform .15s ease;
+
+    /* 蓝色发光字体 */
+    text-shadow:
+      0 0 4px  #7fd4ff,
+      0 0 10px #3fa9f5,
+      0 0 22px #1e8fff,
+      0 0 45px #0a6bff,
+      0 0 80px #0646b8;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      text-shadow:
+        0 0 4px  #7fd4ff,
+        0 0 10px #3fa9f5,
+        0 0 22px #1e8fff,
+        0 0 45px #0a6bff,
+        0 0 80px #0646b8;
+    }
+    50% {
+      text-shadow:
+        0 0 6px  #a9e3ff,
+        0 0 16px #56bcff,
+        0 0 32px #2196ff,
+        0 0 60px #0d78ff,
+        0 0 100px #0a4fd0;
+    }
+  }
+
+  .glow-text:hover {
+    color: #a9e3ff;
+  }
+
+  .glow-text:active {
+    transform: scale(0.97);
+  }
+
+  /* 点击后的提示 */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 8%;
+    transform: translate(-50%, 20px);
+    color: #bfe8ff;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid rgba(90, 180, 255, .45);
+    border-radius: 999px;
+    background: rgba(20, 60, 120, .25);
+    box-shadow: 0 0 18px rgba(60, 150, 255, .45);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .35s ease, transform .35s ease;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+</style>
+</head>
+<body>
+
+  <div class="glow-text" id="text" role="button" tabindex="0"
+       aria-label="点击复制 hyw7 clear！">
+    His soul has in its Autumn, when his wings
+  </div>
+
+  <div class="toast" id="toast">copie！</div>
+
+<script>
+  const COPY_CONTENT = 'hyw7 clear！';
+  const textEl  = document.getElementById('text');
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+
+  /* 复制方案一：现代剪贴板 API */
+  async function copyModern(text) {
+    if (!navigator.clipboard || !window.isSecureContext) {
+      throw new Error('clipboard API unavailable');
+    }
+    await navigator.clipboard.writeText(text);
+  }
+
+  /* 复制方案二：兼容 file:// 等非安全环境 */
+  function copyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+
+    if (!ok) throw new Error('execCommand copy failed');
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1500);
+  }
+
+  async function handleCopy() {
+    try {
+      await copyModern(COPY_CONTENT);
+      showToast('copie！');
+    } catch (e) {
+      try {
+        copyFallback(COPY_CONTENT);
+        showToast('copie！');
+      } catch (e2) {
+        showToast('复制失败，请手动复制');
+      }
+    }
+  }
+
+  textEl.addEventListener('click', handleCopy);
+
+  /* 键盘可访问性：回车 / 空格 也能触发 */
+  textEl.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      handleCopy();
+    }
+  });
+</script>
+
+</body>
+</html>
